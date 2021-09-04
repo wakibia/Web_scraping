@@ -1,0 +1,103 @@
+---
+author: Cyrus Wakibia
+title: Web Scraping Kenyan Weather
+date: 04-09-2021
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+---
+
+```{r setup, include=FALSE}
+## load the libraries
+library(dplyr)
+library(rvest)
+library(stringr)
+library(knitr)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+```{r, include=FALSE}
+## site to scrape
+url <- "https://meteo.go.ke/forecast/todays-weather"
+
+## retrieve the url in R
+weather_page <- read_html(url)
+
+weather_page
+
+```
+
+## Web Scraping Kenya Meteorological Department
+
+>- This tutorial shows how to scrape a weather website using r`rvest` package
+>- The website can be accessed at [Kenya Meteorological Department](https://meteo.go.ke/forecast/todays-weather)
+>- The towns whose wether have been included are only 24 but it's good to show how to scrape the data
+
+## Web scraping procedure
+
+>- You need to familiarise yourself with the **HTML and CSS language** which you can learn at [HTML Tutorials](https://www.w3schools.com/html/default.asp) and [CSS tutorials](https://www.w3schools.com/css/default.asp)
+>- This will help you identifying the target nodes
+>- Next you need to use the selectorGadget which is a google chrome extension and you can add it from [Selector gadget extension](https://chrome.google.com/webstore/detail/selectorgadget/mhjhnkcfbdhnjickkkdbjoemdmbfginb)
+>- This is a video tutorial on how to use the selectorGadget [Video tutorial](https://selectorgadget.com/)
+>- Finally you need to install the rvest package in R `install.packages("rvest")`
+>- You can see some of the nodes and attributes among other things you can do to retrieve information from the site you have intended to scrape from [rvest tidyverse](https://rvest.tidyverse.org/articles/rvest.html)
+
+## Variables we seek to get after performing web scraping
+
+The variables we seek to get are:
+
+>- Town
+>- Weather Condition
+>- Minimum Temperature
+>- Maximum Temperature
+
+We will finally create a data frame using these variables
+
+
+## Perform Web Scraping on Kenya Meteorological Department
+
+
+```{r}
+# check the nodes in the site using the SelectorGadget
+## town
+town <- weather_page %>% 
+  html_nodes(".views-field-field-town .field-content") %>% 
+  html_text()
+
+## weather condition
+weather_condition <- weather_page %>% 
+  html_nodes(".weather-desc") %>% 
+  html_text()
+
+## minimum temperature
+min_temperature <- weather_page %>% 
+  html_nodes(".temp-detail:nth-child(1)") %>% 
+  html_text() %>% 
+  ## extract only digits from the string
+  str_extract("\\d.") %>% 
+  ## convert the characters to strings
+  as.numeric()
+
+## maximum temperature
+max_temperature <- weather_page %>% 
+  html_nodes(".temp-detail+ .temp-detail") %>% 
+  html_text() %>% 
+  str_extract("\\d.") %>% 
+  as.numeric()
+
+```
+
+
+## weather data frame
+
+```{r}
+## create the weather data frame
+weather_data <- tibble(town, weather_condition,
+                       ## temperature is in degree celcius
+                       min_temperature, max_temperature)
+kable(weather_data)
+```
+
+>- The above shows the data frame for the different weather conditions in 24 towns
+>- Note that the site being scraped shows the most current weather conditions
